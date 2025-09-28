@@ -29,6 +29,8 @@ use Exception;
 use Barryvdh\Debugbar\Facades\Debugbar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Vite;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+
 
 /**
  * Class SecureHeaders
@@ -53,6 +55,9 @@ class SecureHeaders
         app('view')->share('JS_NONCE', $nonce);
 
         $response           = $next($request);
+        if ($response instanceof StreamedResponse) {
+           return $response;
+         }
         $trackingScriptSrc  = $this->getTrackingScriptSource();
         $csp                = [
             "default-src 'none'",

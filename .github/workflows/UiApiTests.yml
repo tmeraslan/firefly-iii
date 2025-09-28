@@ -2,8 +2,6 @@
 
 
 
-
-
 name: UI + API + Parser Tests
 
 on:
@@ -19,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FIREFLY_URL: "http://54.217.40.63:8080"
+      FIREFLY_URL: "http://108.129.168.117:8082"
       EMAIL: ${{ secrets.FIREFLY_EMAIL }}
       PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
       HEADLESS: "true"
