@@ -33,10 +33,37 @@ services:
       # === Receipt Inbox ===
       RECEIPT_INBOX_ENABLED: "true"
       FIREFLY_API_BASE: "http://127.0.0.1:8080"
-      FIREFLY_PERSONAL_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMjc3Yjg2OTg1YzAxZGY2MDNiMDAzZDFhYThhMzg4MmE3MzhhZjEzZGM1MTI4YjUxNjRlNDM3NWQ3ZDk5YzZjODNkOWQ2YzlmNTFkMmY5NmEiLCJpYXQiOjE3NTg1Njc2NjEuMTU1OTAxLCJuYmYiOjE3NTg1Njc2NjEuMTU1OTAyLCJleHAiOjE3OTAxMDM2NjEuMTM1ODU2LCJzdWIiOiIxIiwic2NvcGVzIjpbXX0.YTs68_YqT23O-Su-Vzz88uEZ2A0Ogo5R3ddC4PRi0DVo1X44um0P7w40hbfOl1flJx_W61agowMA2JTsvtVx1HTnPhE3dg_X3kdW47r0kK3fmbGqles4_wla5xD5xwnJUDSWMEcAVrmkx4tbFJs39snVqCJ8EsVC4yVLVbpanCBk9nuTNvmgHJhPO8ZK_GcqfY-ZYpq2kKU-HIKh3Q7xSR2uZnldr1ihp65Qik-vExGflqVaV3l5vI8Gekc9bsQjApOzeusFYdUtK43XbL_b-JwPqGQSc0EORbC4gohRm3CrsAA-JCzc1dEQ3VJyah70V1P7D7wFzU4QfGynFJ1FGfWWwFKBo-bFNAQBqjlOu8QUR8Ahec2_RxpnNq39lsnazoFKETUT7zQwA7lWgl1px8twFyLCr9ww8SdyEABYiKfQGK-gwsJ5fYf76EIiSrJ8G-26WlwkJ6H42Q1gX7S_cKXTRsjZS0Kytty-tqHpFVFeFpJKP8yn71i2ughlTEWFdqoXSis2MamkEgt7JqHGzfLyZA2I49yG0Qhf0Zz5rWftGUxAZIlKbFMn4UMjpbYqFqPl2X0nxewLxEwwAoJWwhYyj61Bs2Tk2xeh-A3zCpBvdQdCjEkGLfxFPedlY2THMy5VKImZoQqHuZV-kZWoj2OoAkoUTkQKhzi34H278kk"
+      FIREFLY_PERSONAL_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZjcwNjg3ZjEyZmIyNmRkOWU4NGIxYTM3NDQwMjBkMjdjOGE4OGRjYzM1Y2UwYWZiNDI5ZjM1MWRmZDUyMWU3MWM3M2FlYjgyZGY1NGU2MDUiLCJpYXQiOjE3NTkwOTU1NTMuNDkwMTcsIm5iZiI6MTc1OTA5NTU1My40OTAxNzIsImV4cCI6MTc5MDYzMTU1My4xMzY2MzMsInN1YiI6IjEiLCJzY29wZXMiOltdfQ.haSeS3q-Z_73-HFgnsfis5EdhirgJKROrU9mzTbCEYvAfNlFoTypwCNjFAGLG2sroDrqDAbG0wr8giVLo7day0g073DhGUnWeE4LskgE2Ws0Mzu5HnVytiWdAmNKepwsgZaOQGDKJUlgarQ6qIOiVKAq4CmYU_vZajfqyQOisAjDm1o6oGodZ4-SP5l5otywSz2pmFXQ6T7fMOGGGX0wBYhQNjMhSYkCL-i12Zax_d4OyrlGNfjs_lybmcEatat_Mmg5eALVMFcORn8B1_G2j-QFxhmSr6tyUG3VxcQMLz7QyHntMWaaXcJ75jPqiDEXu4mBV6CLxEF3nxV5VhqyYKdeJpyh866j7P2kyo2B2cofYxN2KRu8sDbBUEOaGo0ox6IZBAUXCoV8Va4dF-bi5lZwXvU1MMIA3vh-H7Wly3eHUd_dZw4tIoisxQRdoV64_8WCQYvQAKmmt01WKnUXx0w5qdFtE-SSpd-OZENE_q6A3kYk-VwY63QG4gZouHaRO21WJ4W_FPwI_aP4B7btlCH5ZcBpfpfomFvy2FFx8jl_SfHYNJPARoPaSNhCcVW4l5LiJE6bLnQX4g6YXqU2cIOjgYG53bb8E-sqJ6NqXMMFi0_-S8f-mVHWwdRnmxzp8zu4Wv1TEbqoGQFRqR7iqH-m3pKHLscn0RJV7-ypdhA"
 
       # === Parser שרץ על ה-Host ===
-      RECEIPT_PARSER_URL: "http://host.docker.internal:8000"
+      RECEIPT_PARSER_URL: "http://parser:8000"
+
+    depends_on:
+      - db
+      - parser
+    restart: unless-stopped
+
+    parser:
+      image: tameer/parser:0.0.1
+      ports:
+        - "8000:8000"
+      restart: unless-stopped
+
+    db:
+      image: mariadb:10.11
+      environment:
+        MARIADB_DATABASE: firefly
+        MARIADB_USER: firefly
+        MARIADB_PASSWORD: firefly
+        MARIADB_ROOT_PASSWORD: root
+      volumes:
+        - db_data:/var/lib/mysql
+      restart: unless-stopped
+
+  volumes:
+    db_data:
+
+
 
       # === S3 ===
       # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
@@ -47,31 +74,6 @@ services:
       # RECEIPT_S3_DISK: "s3"
       # RECEIPT_S3_PREFIX: "receipts/"
       # RECEIPT_S3_SIGNED_URL_SECONDS: "900"
-
-    depends_on:
-      - db
-    restart: unless-stopped
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-
-  db:
-    image: mariadb:10.11
-    environment:
-      MARIADB_DATABASE: firefly
-      MARIADB_USER: firefly
-      MARIADB_PASSWORD: firefly
-      MARIADB_ROOT_PASSWORD: root
-    volumes:
-      - db_data:/var/lib/mysql
-    restart: unless-stopped
-
-volumes:
-  db_data:
-
-
-
-
 
 # services:
 #   app:
