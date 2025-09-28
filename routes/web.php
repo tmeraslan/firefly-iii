@@ -23,6 +23,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
+use FireflyIII\Http\Controllers\ReceiptInboxController;
+
 
 Route::get('/___ping', static fn () => 'pong');
 
@@ -1337,12 +1339,17 @@ Route::group(
         Route::get('inbox',  ['uses' => 'ReceiptInboxController@index',  'as' => 'inbox']);
         Route::post('parse', ['uses' => 'ReceiptInboxController@parse',  'as' => 'parse']);
         Route::post('post',  ['uses' => 'ReceiptInboxController@post',   'as' => 'post']);
+        Route::get('search', ['uses' => 'ReceiptInboxController@search', 'as' => 'search']);
 
-        Route::get('search',               ['uses' => 'ReceiptInboxController@search',   'as' => 'search']);
-        Route::get('{receiptId}/download', ['uses' => 'ReceiptInboxController@download', 'as' => 'download']);
-        Route::get('{receiptId}',          ['uses' => 'ReceiptInboxController@show',     'as' => 'show']);
+        // הורדה – פרמטר אחד, שם עקבי
+        Route::get('{receiptId}/download', [\FireflyIII\Http\Controllers\ReceiptInboxController::class, 'download'])
+            ->name('download')
+            ->withoutMiddleware([\PragmaRX\Google2FALaravel\Middleware::class]); // אם צריך
+
+        Route::get('{receiptId}', ['uses' => 'ReceiptInboxController@show', 'as' => 'show']);
     }
 );
+
 
 // Small JSON helpers for front-end autocompletes (accounts/currencies)
 Route::group(
@@ -1389,3 +1396,4 @@ Route::group(
         })->name('currencies');
     }
 );
+

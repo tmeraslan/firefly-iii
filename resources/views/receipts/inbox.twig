@@ -160,9 +160,18 @@
                     <td>{{ r.total_amount|default('—') }}</td>
                     <td>{{ r.currency|default('—') }}</td>
                     <td>
-                    <a class="btn btn-xs btn-primary" href="{{ route('receipts.show', [r.receipt_id]) }}" target="_blank">JSON</a>
-                    <a class="btn btn-xs btn-default" href="{{ route('receipts.download', [r.receipt_id]) }}">Download</a>
+                {% if r.receipt_id %}
+                <a class="btn btn-xs btn-default"
+                    href="{{ route('receipts.download', {'receiptId': r.receipt_id}) }}">
+                    Download
+                </a>
+                {% else %}
+                <span class="text-muted">No file</span>
+                {% endif %}
+
                     </td>
+
+
                 </tr>
                 {% endfor %}
                 </tbody>

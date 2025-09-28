@@ -261,8 +261,12 @@ final class ReceiptInboxController extends Controller
             $q->where('receipt_id', (string) $request->string('id'));
         }
         if ($request->filled('merchant')) {
-            $q->where('merchant', 'like', '%'.(string) $request->string('merchant').'%');
-        }
+            $term = trim((string) $request->query('merchant', ''));
+            if ($term !== '') {
+                $q->whereNotNull('merchant')
+                ->whereRaw('LOWER(merchant) LIKE ?', ['%' . mb_strtolower($term, 'UTF-8') . '%']);
+            }
+}
 
         $results = $q->orderByDesc('created_at')->limit(100)->get();
 
@@ -308,6 +312,14 @@ final class ReceiptInboxController extends Controller
 
         $disk = (string) Config::get('receipt.s3_disk', 'receipts');
 
-        return Storage::disk($disk)->download($receipt->s3_key);
+        // שם קובץ ידידותי:
+        $ext = pathinfo($receipt->s3_key, PATHINFO_EXTENSION);
+        $base = $receipt->merchant ?: 'receipt';
+        $date = $receipt->purchase_date ?: now()->toDateString();
+        $safe = preg_replace('/[^A-Za-z0-9._-]+/', '_', "{$date}_{$base}");
+        $filename = trim($safe, '_') . ($ext ? ".{$ext}" : '');
+
+        return Storage::disk($disk)->download($receipt->s3_key, $filename);
     }
+
 }
