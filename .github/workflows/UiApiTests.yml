@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FIREFLY_URL: "http://34.245.191.147:8082/login"
+      FIREFLY_URL: "http://34.245.191.147:8082"
       EMAIL: ${{ secrets.FIREFLY_EMAIL }}
       PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
       HEADLESS: "true"
