@@ -1,8 +1,6 @@
 
 
 
-
-
 services:
   app:
     image: tameer/firefly:0.0.23
