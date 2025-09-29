@@ -65,6 +65,11 @@ services:
 
 
 
+
+#docker compose -f compose.ec2.yml logs -f app
+#docker compose -f compose.ec2.yml logs -f parser
+
+
       # === S3 ===
       # AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       # AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
