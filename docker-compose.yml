@@ -18,7 +18,7 @@ services:
       # === בסיס אפליקציה ===
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: "http://3.248.215.96:8082/"
+      APP_URL: "http://108.130.117.131:8082/"
       APP_KEY: "base64:Oxn3bza9hwTes4by6ySdvRNCKoSWFHS9IN1s8Haaab4="
 
       # === DB ===
@@ -91,8 +91,13 @@ services:
 # JoZTS-ANiVq8
 
 
+
+
   # volumes:
   #     - ./.env:/var/www/html/.env:ro
+
+
+
 
 # services:
 #   app:

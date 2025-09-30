@@ -1,10 +1,5 @@
 
 
-
-
-
-
-
 name: UI + API + Parser Tests
 
 on:
@@ -20,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FIREFLY_URL: "http://3.248.215.96:8082"
+      FIREFLY_URL: "http://108.130.117.131:8082"
       EMAIL: ${{ secrets.FIREFLY_EMAIL }}
       PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
       HEADLESS: "true"
@@ -125,7 +120,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      FIREFLY_URL: "http://3.248.215.96:8082"
+      FIREFLY_URL: "http://108.130.117.131:8082"
       FIREFLY_API_TOKEN: ${{ secrets.FIREFLY_API_TOKEN }}   # אם צריך טוקן ל-API
       CI: "true"
     steps:
