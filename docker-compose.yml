@@ -84,6 +84,14 @@ services:
 # docker compose -f compose.ec2.yml logs -f parser
 
 
+
+# ubuntu@ip-172-31-32-47:~/firefly$ docker compose -f compose.ec2.yml exec app sh -lc '
+# printf "%s" "$FIREFLY_PERSONAL_TOKEN" | tail -c 12; printf "\n"
+# '
+# JoZTS-ANiVq8
+
+
+
 # services:
 #   app:
 #     image: tameer/firefly:0.0.23
