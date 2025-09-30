@@ -1,7 +1,5 @@
 
 
-
-
 services:
   app:
     image: tameer/firefly:0.0.23
@@ -12,12 +10,13 @@ services:
       - .aws-test.env
 
     volumes:
-      - ./.env:/var/www/html/.env:ro 
+      - ./.env:/var/www/html/.env:ro
+      - firefly_storage:/var/www/html/storage 
     environment:
       # === בסיס אפליקציה ===
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: "http://108.129.168.117:8082/"
+      APP_URL: "http://3.248.215.96:8082/"
       APP_KEY: "base64:Oxn3bza9hwTes4by6ySdvRNCKoSWFHS9IN1s8Haaab4="
 
       # === DB ===
@@ -46,9 +45,17 @@ services:
     restart: unless-stopped
 
     parser:
-      image: tameer/parser:0.0.1
+      image: tameer/parser:0.0.2
       ports:
         - "8000:8000"
+      env_file:
+       - .aws-test.env
+      healthcheck:
+        test: ["CMD-SHELL", "python -c \"import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',8000)); s.close(); sys.exit(0)\""]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        start_period: 10s
       restart: unless-stopped
 
     db:
@@ -68,8 +75,85 @@ services:
 
 
 
-#docker compose -f compose.ec2.yml logs -f app
-#docker compose -f compose.ec2.yml logs -f parser
+
+
+
+
+# docker compose -f compose.ec2.yml logs -f app
+# docker compose -f compose.ec2.yml logs -f parser
+
+
+# services:
+#   app:
+#     image: tameer/firefly:0.0.23
+#     ports:
+#       - "8082:8080"
+
+#     env_file:
+#       - .aws-test.env
+
+#     volumes:
+#       - ./.env:/var/www/html/.env:ro 
+#     environment:
+#       # === בסיס אפליקציה ===
+#       APP_ENV: production
+#       APP_DEBUG: "false"
+#       APP_URL: "http://108.129.168.117:8082/"
+#       APP_KEY: "base64:Oxn3bza9hwTes4by6ySdvRNCKoSWFHS9IN1s8Haaab4="
+
+#       # === DB ===
+#       DB_CONNECTION: mysql
+#       DB_HOST: db
+#       DB_PORT: 3306
+#       DB_DATABASE: firefly
+#       DB_USERNAME: firefly
+#       DB_PASSWORD: firefly
+
+#       # === כיבוי 2FA שמפיל את ההורדה ===
+#       GOOGLE2FA_ENABLED: "false"
+#       GOOGLE2FA_MIDDLEWARE_ENABLED: "false"
+
+#       # === Receipt Inbox ===
+#       RECEIPT_INBOX_ENABLED: "true"
+#       FIREFLY_API_BASE: "http://127.0.0.1:8080"
+#       FIREFLY_PERSONAL_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZjcwNjg3ZjEyZmIyNmRkOWU4NGIxYTM3NDQwMjBkMjdjOGE4OGRjYzM1Y2UwYWZiNDI5ZjM1MWRmZDUyMWU3MWM3M2FlYjgyZGY1NGU2MDUiLCJpYXQiOjE3NTkwOTU1NTMuNDkwMTcsIm5iZiI6MTc1OTA5NTU1My40OTAxNzIsImV4cCI6MTc5MDYzMTU1My4xMzY2MzMsInN1YiI6IjEiLCJzY29wZXMiOltdfQ.haSeS3q-Z_73-HFgnsfis5EdhirgJKROrU9mzTbCEYvAfNlFoTypwCNjFAGLG2sroDrqDAbG0wr8giVLo7day0g073DhGUnWeE4LskgE2Ws0Mzu5HnVytiWdAmNKepwsgZaOQGDKJUlgarQ6qIOiVKAq4CmYU_vZajfqyQOisAjDm1o6oGodZ4-SP5l5otywSz2pmFXQ6T7fMOGGGX0wBYhQNjMhSYkCL-i12Zax_d4OyrlGNfjs_lybmcEatat_Mmg5eALVMFcORn8B1_G2j-QFxhmSr6tyUG3VxcQMLz7QyHntMWaaXcJ75jPqiDEXu4mBV6CLxEF3nxV5VhqyYKdeJpyh866j7P2kyo2B2cofYxN2KRu8sDbBUEOaGo0ox6IZBAUXCoV8Va4dF-bi5lZwXvU1MMIA3vh-H7Wly3eHUd_dZw4tIoisxQRdoV64_8WCQYvQAKmmt01WKnUXx0w5qdFtE-SSpd-OZENE_q6A3kYk-VwY63QG4gZouHaRO21WJ4W_FPwI_aP4B7btlCH5ZcBpfpfomFvy2FFx8jl_SfHYNJPARoPaSNhCcVW4l5LiJE6bLnQX4g6YXqU2cIOjgYG53bb8E-sqJ6NqXMMFi0_-S8f-mVHWwdRnmxzp8zu4Wv1TEbqoGQFRqR7iqH-m3pKHLscn0RJV7-ypdhA"
+
+#       # === Parser שרץ על ה-Host ===
+#       RECEIPT_PARSER_URL: "http://parser:8000"
+
+#     depends_on:
+#       - db
+#       - parser
+#     restart: unless-stopped
+
+#     parser:
+#       image: tameer/parser:0.0.1
+#       ports:
+#         - "8000:8000"
+#       restart: unless-stopped
+
+#     db:
+#       image: mariadb:10.11
+#       environment:
+#         MARIADB_DATABASE: firefly
+#         MARIADB_USER: firefly
+#         MARIADB_PASSWORD: firefly
+#         MARIADB_ROOT_PASSWORD: root
+#       volumes:
+#         - db_data:/var/lib/mysql
+#       restart: unless-stopped
+
+#   volumes:
+#     db_data:
+
+
+
+
+
+
+
+# docker compose -f compose.ec2.yml logs -f app
+# docker compose -f compose.ec2.yml logs -f parser
 
 
       # === S3 ===
