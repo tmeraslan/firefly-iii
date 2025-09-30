@@ -12,7 +12,7 @@ services:
       - .aws-test.env
 
     volumes:
-      - ./.env:/var/www/html/.env:ro
+      - ./.aws-test.env:/var/www/html/.env:ro
       - firefly_storage:/var/www/html/storage 
     environment:
       # === בסיס אפליקציה ===
@@ -91,6 +91,8 @@ services:
 # JoZTS-ANiVq8
 
 
+  # volumes:
+  #     - ./.env:/var/www/html/.env:ro
 
 # services:
 #   app:
