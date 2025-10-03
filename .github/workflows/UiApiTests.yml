@@ -3,6 +3,8 @@ name: UI + API + Parser Tests
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -242,6 +244,7 @@ jobs:
             exit 1
           fi
 
+  # === 4) איגוד דוחות Allure לדוח משולב (UI + Parser) ===
   allure-aggregate:
     needs: [ui-tests, receipt-parser-tests]
     if: always()
@@ -283,9 +286,10 @@ jobs:
           name: combined-allure-report
           path: merge/allure-report
 
+  # === 5) פרסום הדוח ל-GitHub Pages (רק על push ל-main) ===
   deploy-allure:
     needs: [allure-aggregate]
-    if: always()
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
