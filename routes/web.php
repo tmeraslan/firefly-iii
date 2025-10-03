@@ -1341,10 +1341,9 @@ Route::group(
         Route::post('post',  ['uses' => 'ReceiptInboxController@post',   'as' => 'post']);
         Route::get('search', ['uses' => 'ReceiptInboxController@search', 'as' => 'search']);
 
-        // הורדה – פרמטר אחד, שם עקבי
         Route::get('{receiptId}/download', [\FireflyIII\Http\Controllers\ReceiptInboxController::class, 'download'])
             ->name('download')
-            ->withoutMiddleware([\PragmaRX\Google2FALaravel\Middleware::class]); // אם צריך
+            ->withoutMiddleware([\PragmaRX\Google2FALaravel\Middleware::class]); 
 
         Route::get('{receiptId}', ['uses' => 'ReceiptInboxController@show', 'as' => 'show']);
     }

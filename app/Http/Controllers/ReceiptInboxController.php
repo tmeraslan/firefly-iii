@@ -76,10 +76,8 @@ final class ReceiptInboxController extends Controller
 
             $parsed = $resp->json() ?: [];
 
-            // fallback ל-UUID אם ה-parser לא החזיר receipt_id
             $parsed['receipt_id'] = $parsed['receipt_id'] ?? $uid;
 
-            // נעביר ל-view גם את פרטי ה-S3
             $parsed['_s3'] = $s3Info;
 
             $assetAccounts   = $this->fetchAccounts('asset');
@@ -91,7 +89,7 @@ final class ReceiptInboxController extends Controller
                 'expenseAccounts' => $expenseAccounts,
                 'error'           => null,
                 'results'         => null,
-                's3info'          => $s3Info, // כדי שהטופס יכלול hidden fields
+                's3info'          => $s3Info, 
             ]);
         } catch (\Throwable $e) {
             Log::error('receipt-parse failed', ['e' => $e]);
@@ -114,7 +112,6 @@ final class ReceiptInboxController extends Controller
             'asset_account_id'   => ['required', 'string'],
             'expense_account_id' => ['required', 'string'],
 
-            // מידע ה-S3 מהשלב של parse (hidden fields)
             '_s3.s3_key'         => ['required','string'],
             '_s3.mime'           => ['nullable','string'],
             '_s3.size'           => ['nullable','integer'],
@@ -157,7 +154,6 @@ final class ReceiptInboxController extends Controller
                 );
             }
 
-            // חילוץ מזהה קבוצת העסקאות ושמירה בבסיס
             $respBody = $resp->json();
             $groupId  = data_get($respBody, 'data.id') ?? data_get($respBody, 'data.0.id');
 
