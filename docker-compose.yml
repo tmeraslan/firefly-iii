@@ -15,10 +15,9 @@ services:
       - ./.aws-test.env:/var/www/html/.env:ro
       - firefly_storage:/var/www/html/storage 
     environment:
-      # === בסיס אפליקציה ===
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: "http://108.130.117.131:8082/"
+      APP_URL: "http://54.77.26.161:8082/"
       APP_KEY: "base64:Oxn3bza9hwTes4by6ySdvRNCKoSWFHS9IN1s8Haaab4="
 
       # === DB ===
@@ -29,7 +28,6 @@ services:
       DB_USERNAME: firefly
       DB_PASSWORD: firefly
 
-      # === כיבוי 2FA שמפיל את ההורדה ===
       GOOGLE2FA_ENABLED: "false"
       GOOGLE2FA_MIDDLEWARE_ENABLED: "false"
 
@@ -37,7 +35,6 @@ services:
       RECEIPT_INBOX_ENABLED: "true"
       FIREFLY_API_BASE: "http://127.0.0.1:8080"
       FIREFLY_PERSONAL_TOKEN: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiMzk3MzY5YzJkMjZkYTEzNDNjZGY5N2E5YWIwNzhkYmIxYmFhODQzNGNhZjRhZTBkMzFmNGQ2MzM5MjMxZDA3MWJhOGMzZDVmYWU2MDNkNDgiLCJpYXQiOjE3NTkyMjM2OTYuNjA3NjI4LCJuYmYiOjE3NTkyMjM2OTYuNjA3NjMsImV4cCI6MTc5MDc1OTY5Ni41NDQxNzcsInN1YiI6IjEiLCJzY29wZXMiOltdfQ.ZgXwEJcyV4y9YAYWkP6mObyLAB67RzAptknuO0UxT9Gnu96lfs37e5XVRTuaQGyspNvJhtaIx_lnKybGKqAu5vXzT6GM1hX1FphqBEJNTegOl7rcQubKqYtTCBMDcAz1UQsH_vI93C6pEbadL1ipMyH4_SsXbeTSDer3CggV-32ObAvBI2JXgKVBZozoMcYUWfXjTEKUxAX1POcSrnCcoKIMmXm2W8FPE5zACcnSsLgjI_DobETXFErosKzjqfR1tckPLoQSlaPqJY8xUSySCQmONQjxJCwcZOnRmh652FS0EiBELucaO0gKQtH6GmZVoWxefeKfdEDVRirW5ITS__LNHkqbxgGGivdSN0Qj321kYBialjVQmNs8mry8PS1V85Ul4Vap4dlr8J27m40hlX41stQeq_c8LFBv-GB3TLiA_WnYDSsnOVMaymL8ighGDFEv7GkJbydM-H-MiU_76tuGl013X2b7y5VdmZlAvX8MXhCFXK66gnd_32D-ubXmm8h_LJOx8mWoFKxNCMVoWHyBz0W-TWsSktH8xlfQPELbzt60VLZ05bWRqBbIjc6j2m-GXz60sNR9soVMZVi7rcQnhAvba5jOTDlPlGDD8Faqewqr1Xt5_7PBqgvDGfn08xOig0vgCP7NR4TuUCeMyNPvhLBbXWZl5Yhmb8d-SSw"
-      # === Parser שרץ על ה-Host ===
       RECEIPT_PARSER_URL: "http://parser:8000"
 
     depends_on:
