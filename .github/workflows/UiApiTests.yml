@@ -3,9 +3,13 @@ name: UI + API + Parser Tests
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   # === 1) UI (Selenium) + Allure ===
@@ -238,6 +242,7 @@ jobs:
             echo "❌ Could not detect project type (no composer.json / requirements.txt / package.json / tests)."
             ls -la
             exit 1
+          fi
 
   # === 4) איגוד דוחות Allure לדוח משולב (UI + Parser) ===
   allure-aggregate:
@@ -280,6 +285,37 @@ jobs:
         with:
           name: combined-allure-report
           path: merge/allure-report
+
+  # === 5) פרסום הדוח ל-GitHub Pages (רק על push ל-main) ===
+  deploy-allure:
+    needs: [allure-aggregate]
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+    steps:
+      - name: Download combined report
+        uses: actions/download-artifact@v4
+        with:
+          name: combined-allure-report
+          path: site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
 
 
 
