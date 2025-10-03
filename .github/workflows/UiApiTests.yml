@@ -8,7 +8,7 @@ on:
   pull_request:
     branches: [ main ]
   # push:
-  #   branches: [ main ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -290,35 +290,35 @@ jobs:
           name: combined-allure-report
           path: merge/allure-report
 
-  # # === 5) פרסום הדוח ל-GitHub Pages (רק על push ל-main) ===
-  # deploy-allure:
-  #   needs: [allure-aggregate]
-  #   if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
-  #   permissions:
-  #     pages: write
-  #     id-token: write
-  #   concurrency:
-  #     group: "pages"
-  #     cancel-in-progress: true
-  #   steps:
-  #     - name: Download combined report
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: combined-allure-report
-  #         path: site
+  # === 5) פרסום הדוח ל-GitHub Pages (רק על push ל-main) ===
+  deploy-allure:
+    needs: [allure-aggregate]
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: "pages"
+      cancel-in-progress: true
+    steps:
+      - name: Download combined report
+        uses: actions/download-artifact@v4
+        with:
+          name: combined-allure-report
+          path: site
 
-  #     - name: Upload Pages artifact
-  #       uses: actions/upload-pages-artifact@v3
-  #       with:
-  #         path: site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
 
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
 
 
