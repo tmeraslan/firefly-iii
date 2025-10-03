@@ -238,6 +238,7 @@ jobs:
             echo "❌ Could not detect project type (no composer.json / requirements.txt / package.json / tests)."
             ls -la
             exit 1
+          fi
 
   # === 4) איגוד דוחות Allure לדוח משולב (UI + Parser) ===
   allure-aggregate:
@@ -280,6 +281,7 @@ jobs:
         with:
           name: combined-allure-report
           path: merge/allure-report
+
 
 
 
