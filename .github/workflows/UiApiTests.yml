@@ -7,7 +7,7 @@ name: UI + API + Parser Tests
 on:
   pull_request:
     branches: [ main ]
-  # push:
+  push:
     branches: [ main ]
 
 permissions:
