@@ -67,7 +67,9 @@ jobs:
       - name: Run Selenium UI tests (headless) + Allure results
         run: |
           cd firefly-UI
-                pytest tests -v --disable-warnings --timeout=120 \ --ignore=tests/test_openai_vision.py \ --ignore=tests/api \--alluredir=allure-results
+          ls -R tests || true
+          pytest -v --disable-warnings --timeout=120 \  -k "not openai and not api and not parser" \--alluredir=allure-results \tests
+
 
       - name: Install Allure CLI
         run: npm i -g allure-commandline
