@@ -5,12 +5,10 @@ name: UI + API + Parser Tests
 on:
   pull_request:
     branches: [ main ]
-  workflow_dispatch: {}  # מאפשר "Run workflow" ידני מה-Actions
+  workflow_dispatch: {}  # הרצה ידנית מה-Actions
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   # === 1) UI (Selenium) + Allure ===
@@ -84,6 +82,7 @@ jobs:
           name: ui-screenshots
           path: firefly-UI/screenshots/**
           if-no-files-found: ignore
+          retention-days: 14
 
       - name: Upload UI Allure results (raw)
         if: always()
@@ -91,6 +90,7 @@ jobs:
         with:
           name: ui-allure-results
           path: firefly-UI/allure-results
+          retention-days: 14
 
       - name: Upload UI Allure HTML report
         if: always()
@@ -98,6 +98,8 @@ jobs:
         with:
           name: ui-allure-report
           path: firefly-UI/allure-report
+          if-no-files-found: ignore
+          retention-days: 14
 
   # === 2) receipt-parser (pytest) — בלי Allure ===
   receipt-parser-tests:
@@ -134,6 +136,7 @@ jobs:
           name: receipt-parser-artifacts
           path: receipt-parser/.pytest_cache/**
           if-no-files-found: ignore
+          retention-days: 7
 
   # === 3) firefly API tests (Auto-detect) — בלי Allure ===
   firefly-api-tests:
@@ -221,69 +224,7 @@ jobs:
             echo "❌ Could not detect project type (no composer.json / requirements.txt / package.json / tests)."
             ls -la
             exit 1
-          fi
 
-  # === 4) פרסום דוח ה-UI ל-GitHub Pages מתוך PR (Preview) — חסין לחוסר דוח ===
-  deploy-allure-ui:
-    needs: [ui-tests]
-    if: |
-      always() &&
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Download UI Allure HTML report (if exists)
-        uses: actions/download-artifact@v4
-        with:
-          name: ui-allure-report
-          path: ./public
-        continue-on-error: true
-
-      - name: Download UI Allure results (fallback)
-        if: ${{ hashFiles('public/index.html') == '' }}
-        uses: actions/download-artifact@v4
-        with:
-          name: ui-allure-results
-          path: ./allure-results
-        continue-on-error: true
-
-      - name: Generate Allure HTML from results (fallback)
-        if: ${{ hashFiles('public/index.html') == '' && hashFiles('allure-results/**') != '' }}
-        run: |
-          npm i -g allure-commandline
-          allure generate ./allure-results --clean -o ./public
-
-      - name: Check report presence
-        id: check_report
-        run: |
-          if [ -f ./public/index.html ]; then
-            echo "found=true" >> $GITHUB_OUTPUT
-            echo "✅ Found Allure report (./public/index.html)"
-          else
-            echo "found=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No Allure report found. Skipping Pages deploy."
-          fi
-
-      - name: Setup Pages
-        if: ${{ steps.check_report.outputs.found == 'true' }}
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages artifact
-        if: ${{ steps.check_report.outputs.found == 'true' }}
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public
-
-      - name: Deploy to GitHub Pages (Preview)
-        if: ${{ steps.check_report.outputs.found == 'true' }}
-        id: deployment
-        uses: actions/deploy-pages@v4
 
 
 
