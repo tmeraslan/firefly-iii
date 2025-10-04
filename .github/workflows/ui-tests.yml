@@ -1,5 +1,6 @@
 
 
+
 name: UI Tests (Selenium) + Allure
 
 on:
