@@ -1,0 +1,98 @@
+name: API Tests (auto-detect)
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  firefly-api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FIREFLY_URL: "http://54.74.74.176:8082"
+      FIREFLY_API_TOKEN: ${{ secrets.FIREFLY_API_TOKEN }}
+      CI: "true"
+
+    steps:
+      - name: Checkout firefly API repo
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/firefly
+          path: firefly-api
+
+      - name: Detect & run API tests
+        shell: bash
+        working-directory: firefly-api
+        run: |
+          set -Eeuo pipefail
+          echo "🔎 Detecting project type in $(pwd)..."
+
+          has_php=false
+          has_py=false
+          has_node=false
+          has_postman=false
+
+          [[ -f composer.json ]] && has_php=true
+          if [[ -f requirements.txt ]]; then
+            has_py=true
+          elif compgen -G "tests/*.py" >/dev/null; then
+            has_py=true
+          fi
+          [[ -f package.json ]] && has_node=true
+          compgen -G "*.postman_collection.json" >/dev/null && has_postman=true
+
+          if $has_php; then
+            echo "→ PHP project detected"
+            sudo apt-get update
+            sudo apt-get install -y php-cli php-xml php-mbstring php-curl unzip
+            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+            composer install --no-interaction --prefer-dist
+            if [[ -x vendor/bin/pest ]]; then
+              vendor/bin/pest -v
+            elif [[ -f phpunit.xml || -f phpunit.xml.dist ]]; then
+              vendor/bin/phpunit --testdox
+            else
+              echo "❌ No Pest/PHPUnit config found."
+              exit 1
+            fi
+
+          elif $has_py; then
+            echo "→ Python API tests detected"
+            python -m pip install --upgrade pip
+            if [[ -f requirements.txt ]]; then pip install -r requirements.txt; fi
+            pip install pytest requests
+            pytest tests -v --disable-warnings
+
+          elif $has_node; then
+            echo "→ Node/Postman project detected"
+            npm ci || npm install
+            if $has_postman; then
+              npm i -g newman
+              shopt -s nullglob
+              if compgen -G "*.postman_environment.json" >/dev/null; then
+                for c in *.postman_collection.json; do
+                  for e in *.postman_environment.json; do
+                    echo "Running newman: $c with $e"
+                    newman run "$c" -e "$e" --env-var baseUrl="${FIREFLY_URL}" --env-var token="${FIREFLY_API_TOKEN}"
+                  done
+                done
+              else
+                for c in *.postman_collection.json; do
+                  echo "Running newman: $c"
+                  newman run "$c" --env-var baseUrl="${FIREFLY_URL}" --env-var token="${FIREFLY_API_TOKEN}"
+                done
+              fi
+            else
+              echo "Running npm test"
+              npm test --silent || npm run test
+            fi
+
+          else
+            echo "❌ Could not detect project type (no composer.json / requirements.txt / package.json / tests)."
+            ls -la
+            exit 1
+          fi
