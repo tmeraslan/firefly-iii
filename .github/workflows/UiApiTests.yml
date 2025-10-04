@@ -1,5 +1,158 @@
 
 
+name: UI + API + Parser Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}  # הרצה ידנית מה-Actions
+
+permissions:
+  contents: read
+
+jobs:
+  # === 1) UI (Selenium) + Allure ===
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FIREFLY_URL: "http://54.74.74.176:8082"
+      EMAIL: ${{ secrets.FIREFLY_EMAIL }}
+      PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
+      HEADLESS: "true"
+      CI: "true"
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Checkout Firefly III repository (PR code)
+        uses: actions/checkout@v4
+
+      - name: Checkout Firefly-UI (tests repo)
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/firefly-UI
+          path: firefly-UI
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Chrome (stable)
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd firefly-UI
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install "selenium>=4.13" pillow pytest pytest-timeout allure-pytest
+
+      - name: Wait for Firefly to be ready
+        run: |
+          echo "Waiting for ${FIREFLY_URL}..."
+          for i in $(seq 1 40); do
+            if curl -fsSL -o /dev/null "${FIREFLY_URL}/login" || curl -fsSL -o /dev/null "${FIREFLY_URL}/api/v1/ping"; then
+              echo "✅ Firefly is reachable"; exit 0
+            fi
+            echo "Attempt $i/40: not ready, sleeping 3s..."; sleep 3
+          done
+          echo "❌ Firefly did not become ready."
+          curl -I "${FIREFLY_URL}/login" || true
+          exit 1
+
+      - name: Run Selenium UI tests (headless) + Allure results
+        run: |
+          cd firefly-UI
+          pytest tests/ -v --disable-warnings --timeout=120 --alluredir=allure-results
+
+      - name: Install Allure CLI
+        run: npm i -g allure-commandline
+
+      - name: Generate Allure HTML report
+        run: |
+          cd firefly-UI
+          allure generate allure-results --clean -o allure-report || echo "No Allure results to generate"
+
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: firefly-UI/screenshots/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload UI Allure results (raw)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-allure-results
+          path: firefly-UI/allure-results
+          retention-days: 14
+
+      - name: Upload UI Allure HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-allure-report
+          path: firefly-UI/allure-report
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # === 2) receipt-parser (pytest) — בלי Allure ===
+  receipt-parser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout receipt-parser
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/receipt-parser
+          path: receipt-parser
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          cd receipt-parser
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
+
+      - name: Run parser tests (no Allure)
+        run: |
+          cd receipt-parser
+          pytest tests -v --disable-warnings
+
+      - name: Upload parser cache (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receipt-parser-artifacts
+          path: receipt-parser/.pytest_cache/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # === 3) firefly API tests (Auto-detect) — בלי Allure ===
+  firefly-api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FIREFLY_URL: "http://54.74.74.176:8082"
+      FIREFLY_API_TOKEN: ${{ secrets.FIREFLY_API_TOKEN }}
+      CI: "true"
+    steps:
+      - name: Checkout firefly (API repo)
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/firefly
+          path: firefly-api
+
       - name: Detect & run API tests
         shell: bash
         working-directory: firefly-api
@@ -82,7 +235,6 @@
             ls -la
             exit 1
           fi
-
 
 
 
