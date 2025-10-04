@@ -1,0 +1,47 @@
+name: Receipt Parser Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  receipt-parser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout receipt-parser
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/receipt-parser
+          path: receipt-parser
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          cd receipt-parser
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          cd receipt-parser
+          pytest tests -v --disable-warnings
+
+      - name: Upload parser artifacts (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: receipt-parser-artifacts
+          path: |
+            receipt-parser/.pytest_cache/**
+          if-no-files-found: ignore

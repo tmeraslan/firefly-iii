@@ -1,0 +1,197 @@
+
+
+
+name: UI Tests (Selenium) + Allure
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+# צריך הרשאות ל-Pages בשביל לפרוס את דוח ה-Allure
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FIREFLY_URL: "http://54.74.74.176:8082"
+      EMAIL: ${{ secrets.FIREFLY_EMAIL }}
+      PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
+      HEADLESS: "true"
+      CI: "true"
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout PR repo (Firefly III)
+        uses: actions/checkout@v4
+
+      - name: Checkout Firefly-UI tests repo
+        uses: actions/checkout@v4
+        with:
+          repository: tmeraslan/firefly-UI
+          path: firefly-UI
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Chrome (stable)
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install Python dependencies (incl. Allure plugin)
+        run: |
+          python -m pip install --upgrade pip
+          cd firefly-UI
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install "selenium>=4.13" pillow pytest pytest-timeout allure-pytest
+
+      - name: Wait for Firefly to be ready
+        run: |
+          set -e
+          echo "Waiting for ${FIREFLY_URL}..."
+          for i in $(seq 1 40); do
+            if curl -fsSL -o /dev/null "${FIREFLY_URL}/login" || curl -fsSL -o /dev/null "${FIREFLY_URL}/api/v1/ping"; then
+              echo "✅ Firefly is reachable"; exit 0
+            fi
+            echo "Attempt $i/40: not ready, sleeping 3s..."; sleep 3
+          done
+          echo "❌ Firefly did not become ready."
+          curl -I "${FIREFLY_URL}/login" || true
+          exit 1
+
+      - name: Run Selenium UI tests (headless) with Allure results
+        run: |
+          cd firefly-UI
+          # alluredir בתוך רפוזיטורי הטסטים
+          pytest tests/ -v --disable-warnings --timeout=120 --alluredir=allure-results
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-ui
+          path: firefly-UI/allure-results
+          if-no-files-found: ignore
+          retention-days: 14
+
+  allure-report:
+    runs-on: ubuntu-latest
+    needs: ui-tests
+    if: always()  # גם אם הטסטים נכשלו—עדיין נייצר דוח
+    steps:
+      - name: Checkout (for Pages metadata)
+        uses: actions/checkout@v4
+
+      - name: Download Allure results
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-ui
+          path: allure-results
+
+      # מייצרים דוח Allure לתיקייה מקומית
+      - name: Generate Allure report
+        uses: simple-elf/allure-report-action@master
+        with:
+          allure_results: allure-results
+          allure_report: allure-report
+          keep_reports: 20
+
+      # מעלים את הדוח שנוצר ל-GitHub Pages (מודרני, בלי gh-pages ברנץ')
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
+
+
+
+
+
+# name: UI Tests (Selenium)
+
+# on:
+#   pull_request:
+#     branches: [ main ]
+#   workflow_dispatch: {}
+
+# permissions:
+#   contents: read
+
+# jobs:
+#   ui-tests:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 30
+#     env:
+#       FIREFLY_URL: "http://54.74.74.176:8082"
+#       EMAIL: ${{ secrets.FIREFLY_EMAIL }}
+#       PASSWORD: ${{ secrets.FIREFLY_PASSWORD }}
+#       HEADLESS: "true"
+#       CI: "true"
+#       PYTHONUNBUFFERED: "1"
+
+#     steps:
+#       - name: Checkout PR repo (Firefly III)
+#         uses: actions/checkout@v4
+
+#       - name: Checkout Firefly-UI tests repo
+#         uses: actions/checkout@v4
+#         with:
+#           repository: tmeraslan/firefly-UI
+#           path: firefly-UI
+
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.11"
+
+#       - name: Setup Chrome (stable)
+#         uses: browser-actions/setup-chrome@v1
+#         with:
+#           chrome-version: stable
+
+#       - name: Install Python dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           cd firefly-UI
+#           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+#           pip install "selenium>=4.13" pillow pytest pytest-timeout
+
+#       - name: Wait for Firefly to be ready
+#         run: |
+#           set -e
+#           echo "Waiting for ${FIREFLY_URL}..."
+#           for i in $(seq 1 40); do
+#             if curl -fsSL -o /dev/null "${FIREFLY_URL}/login" || curl -fsSL -o /dev/null "${FIREFLY_URL}/api/v1/ping"; then
+#               echo "✅ Firefly is reachable"; exit 0
+#             fi
+#             echo "Attempt $i/40: not ready, sleeping 3s..."; sleep 3
+#           done
+#           echo "❌ Firefly did not become ready."
+#           curl -I "${FIREFLY_URL}/login" || true
+#           exit 1
+
+#       - name: Run Selenium UI tests (headless)
+#         run: |
+#           cd firefly-UI
+#           pytest tests/ -v --disable-warnings --timeout=120
+
+#       - name: Upload UI artifacts (optional)
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: ui-test-artifacts
+#           path: |
+#             firefly-UI/reports/**
+#             firefly-UI/screenshots/**
+#           if-no-files-found: ignore
