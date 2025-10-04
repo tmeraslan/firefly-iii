@@ -222,7 +222,7 @@ jobs:
             exit 1
           fi
 
-  # === 4) פרסום דוח ה-UI ל-GitHub Pages ===
+  # === 4) פרסום דוח ה-UI ל-GitHub Pages מתוך PR (Preview) ===
   deploy-allure-ui:
     needs: [ui-tests]
     # רץ רק ב-pull_request ובתנאי שה-PR לא מגיע מ-fork (כי ל-fork אין הרשאות ל-Pages)
@@ -238,8 +238,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download UI Allure HTML report
-          # זה הדוח הסטטי שנוצר ב-ui-tests
+      - name: Download UI Allure HTML report # זה הדוח הסטטי שנוצר ב-ui-tests
         uses: actions/download-artifact@v4
         with:
           name: ui-allure-report
@@ -261,6 +260,7 @@ jobs:
       - name: Deploy to GitHub Pages (Preview)
         id: deployment
         uses: actions/deploy-pages@v4
+
 
 
 
